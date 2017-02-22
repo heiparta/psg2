@@ -55,16 +55,16 @@ functions:
     environment:
       MODELS_TABLE: "${self:provider.environment.MODELS_TABLE}"
   series-get:
-    handler: src/series.handler
+    handler: src/series.get
     events:
       - http:
-          path: series/{id}
+          path: series/{name}
           method: get
   series-create:
     handler: src/series.create
     events:
       - http:
-          path: series
+          path: series/{name}
           method: post
     environment:
       MODELS_TABLE: "${self:provider.environment.MODELS_TABLE}"
