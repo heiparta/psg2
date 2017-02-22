@@ -1,0 +1,16 @@
+{
+  "name": "psg2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Heikki Partanen <heikki.partanen@f-secure.com>",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.16.0",
+    "bluebird": "^3.4.7",
+    "lodash": "^4.17.4"
+  }
+}
