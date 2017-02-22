@@ -7,6 +7,7 @@ service: psg2
 provider:
   name: aws
   runtime: nodejs4.3
+  memorySize: 256
 
   environment:
     MODELS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-models
