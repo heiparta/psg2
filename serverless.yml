@@ -46,14 +46,15 @@ provider:
     #- exclude-me-dir/**
 
 functions:
+  environment:
+    MODELS_TABLE: "${self:provider.environment.MODELS_TABLE}"
+
   series-list:
     handler: src/series.list
     events:
       - http:
           path: series
           method: get
-    environment:
-      MODELS_TABLE: "${self:provider.environment.MODELS_TABLE}"
   series-get:
     handler: src/series.get
     events:
@@ -66,9 +67,19 @@ functions:
       - http:
           path: series/{name}
           method: post
-    environment:
-      MODELS_TABLE: "${self:provider.environment.MODELS_TABLE}"
 
+  player-get:
+    handler: src/player.get
+    events:
+      - http:
+          path: player/{name}
+          method: get
+  player-create:
+    handler: src/player.create
+    events:
+      - http:
+          path: player/{name}
+          method: post
 #    Define function environment variables here
 #    environment:
 #      variable2: value2
@@ -96,16 +107,10 @@ resources:
           -
             AttributeName: id
             AttributeType: S
-          -
-            AttributeName: modified
-            AttributeType: N
         KeySchema:
           -
             AttributeName: id
             KeyType: HASH
-          -
-            AttributeName: modified
-            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

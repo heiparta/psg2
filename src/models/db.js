@@ -7,18 +7,29 @@ AWS.config.update({region: "eu-west-1"});
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 Promise.promisifyAll(dynamodb);
 
-module.exports.addSeriesToList = function (id) {
+module.exports.addToListProperty = function (id, propertyName, value) {
   var params = {
     TableName: process.env.MODELS_TABLE,
-    Item: {
-      id: "serieslist",
-      modified: Date.now(),
+    Key: {
+      id: id,
     },
-    ReturnValues: "ALL_NEW",
+    ConditionExpression: "NOT contains (#pname, :singlevalue)",
+    UpdateExpression: "SET #pname = list_append(#pname, :listvalue)",
+    ExpressionAttributeNames: {
+      "#pname": propertyName,
+    },
+    ExpressionAttributeValues: {
+      ":singlevalue": value,
+      ":listvalue": [value],
+    },
   };
   return dynamodb.updateAsync(params)
-    .tap(function (response) {
-      console.log("GRGG", response);
+    .catch(function (err) {
+      if (err.code === "ConditionalCheckFailedException") {
+        // Already exists in the list, all good
+        return;
+      }
+      throw err;
     });
 };
 
