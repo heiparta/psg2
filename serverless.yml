@@ -46,8 +46,6 @@ provider:
     #- exclude-me-dir/**
 
 functions:
-  environment:
-    MODELS_TABLE: "${self:provider.environment.MODELS_TABLE}"
 
   series-list:
     handler: src/series.list
@@ -79,6 +77,12 @@ functions:
     events:
       - http:
           path: player/{name}
+          method: post
+  player-add-to-series:
+    handler: src/player.addToSeries
+    events:
+      - http:
+          path: player/{name}/series
           method: post
 #    Define function environment variables here
 #    environment:

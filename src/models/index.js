@@ -17,10 +17,13 @@ ModelBase.prototype.load = function (id, options) {
   const self = this;
   return db.getModel(this.key(id))
     .tap(function (item) {
-      console.log("GRGAG", item);
+      if (!item) {
+        throw new errors.NotFoundError("Object not found: " + self.key(id));
+      }
       _.forEach(self.properties, function (key) {
         self[key] = item[key];
       });
+      self._isSaved = true;
     });
 };
 
@@ -104,14 +107,3 @@ module.exports = {
   Player: Player,
 };
 
-
-//const series = new Series("ööl");
-//series.load().then(function(r) {console.log("FEAF", r);});
-//const player = new Player("Junno");
-//series.save()
-  //.then(function () {
-    //return player.save();
-  //})
-  //.then(function () {
-    //player.addToSeries(series.name);
-  //});

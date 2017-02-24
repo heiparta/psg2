@@ -10,4 +10,11 @@ module.exports.getError = function (statusCode, err) {
   });
 };
 
+module.exports.parseBody = function (raw) {
+  return Promise.resolve()
+    .then(function () {
+      return JSON.parse(raw);
+    });
+};
+
 

@@ -25,7 +25,7 @@ exports.create = function (event, context, callback) {
 
 exports.get = function (event, context, callback) {
   const name = decodeURI(event.pathParameters.name);
-  const model = new models.Player();
+  const model = new models.Player(name);
   return model.load(name)
     .then(function () {
       return callback(null, {
@@ -42,12 +42,24 @@ exports.get = function (event, context, callback) {
 };
 
 exports.addToSeries = function (event, context, callback) {
-  return models.Series.list()
-    .then(function (response) {
+  const name = decodeURI(event.pathParameters.name);
+  const player = new models.Player(name);
+  const series = new models.Series(name);
+  return common.parseBody(event.body)
+    .then(function (params) {
+      return Promise.all([
+        player.load(name),
+        series.load(params.series),
+      ]);
+    })
+    .then(function () {
+      return player.addToSeries(series.name);
+    })
+    .then(function () {
       return callback(null, {
         statusCode: 200,
         body: JSON.stringify({
-          "data": response,
+          "data": {},
         })
       });
     })
