@@ -41,7 +41,6 @@ module.exports.getModel = function (id) {
       ":id": id,
     },
   };
-  console.log("Querying", params);
   return dynamodb.queryAsync(params)
     .then(function (result) {
       if (result.Items.length === 0) {
