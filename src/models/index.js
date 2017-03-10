@@ -17,13 +17,14 @@ ModelBase.prototype.key = function (id) {
 
 ModelBase.prototype.load = function (id, options) {
   const self = this;
-  var key = options.isKey ? id : this.key(id);
+  options = options || {};
+  const key = options.isKey ? id : this.key(id);
   return db.getModel(key)
     .tap(function (item) {
       if (!item) {
         throw new errors.NotFoundError("Object not found: " + self.key(id));
       }
-      _.forOwn(self.properties, function (Type, key) {
+      _.forOwn(self.properties, function (pprops, key) {
         self[key] = item[key];
       });
       self._isSaved = true;
@@ -42,7 +43,7 @@ ModelBase.prototype.unpopulate = function () {
       return obj;
     }
   }
-  _.forOwn(this.properties, function (Type, p) {
+  _.forOwn(this.properties, function (pprops, p) {
     self[p] = keyify(self[p]);
   });
   this._isPopulated = false;
@@ -71,8 +72,8 @@ ModelBase.prototype.populate = function (props) {
       return obj;
     }
   }
-  _.forOwn(props, function (Type, p) {
-    self[p] = objectify(self[p], Type);
+  _.forOwn(props, function (pprops, p) {
+    self[p] = objectify(self[p], pprops.type);
   });
   return Promise.all(promises)
     .then(function () {
@@ -86,7 +87,8 @@ ModelBase.populate = function () {
 
 
 ModelBase.prototype.serialize = function () {
-  return _.pick(this, this.properties);
+  this.unpopulate();
+  return _.pick(this, Object.keys(this.properties));
 };
 
 ModelBase.prototype.isSaved = function () {
@@ -99,12 +101,7 @@ ModelBase.prototype.save = function () {
   const props = this.serialize();
   props.modified = Date.now();
 
-  const populatePromise = this._isPopulated ? this.unpopulate() : Promise.resolve;
-
-  return populatePromise
-    .then(function () {
-      return db.saveModel(key, props);
-    })
+  return db.saveModel(key, props)
     .tap(function () {
       self._isSaved = true;
     });
@@ -120,8 +117,8 @@ Player.prototype = Object.create(ModelBase.prototype);
 Player.prototype.keyPrefix = "player";
 Player.prototype.idField = "username";
 Player.prototype.properties = {
-  "name": String,
-  "username": String,
+  "name": {type: String, required: true},
+  "username": {type: String},
 };
 
 Player.prototype.addToSeries = function (series) {
@@ -141,8 +138,8 @@ Series.prototype = Object.create(ModelBase.prototype);
 Series.prototype.keyPrefix = "series";
 Series.prototype.idField = "name";
 Series.prototype.properties = {
-  "name": String,
-  "players": Player,
+  "name": {type: String, required: true},
+  "players": {type: Player},
 };
 
 Series.prototype.save = function () {
@@ -164,14 +161,22 @@ Series.prototype.save = function () {
 Series.list = function () {
   return db.getModel("serieslist")
     .then(function (item) {
-      return item ? item.series : [];
+      if (!item) {
+        return [];
+      }
+      return item.series_keys.map(function (s) {
+        return _.split(s, ':')[1]; // Remove the "series:" key prefix
+      });
     });
 };
 
 const Game = function (properties) {
   var self = this;
   if (properties) {
-    _.forOwn(this.properties, function (v, k) {
+    _.forOwn(this.properties, function (pprops, k) {
+      if (pprops.required && properties[k] === undefined) {
+        throw new errors.RequiredPropertyMissingError("Missing property: " + k);
+      }
       self[k] = properties[k];
     });
     if (!this.id) {
@@ -186,15 +191,15 @@ Game.prototype = Object.create(ModelBase.prototype);
 Game.prototype.keyPrefix = "game";
 Game.prototype.idField = "id";
 Game.prototype.properties = {
-  "id": String,
-  "timestamp": Number,
-  "series": Series,
-  "teamAway": String,
-  "teamHome": String,
-  "goalsAway": Number,
-  "goalsHome": Number,
-  "playersAway": Player,
-  "playersHome": Player,
+  "id": {type: String},
+  "timestamp": {type: Number},
+  "series": {type: Series, required: true},
+  "teamAway": {type: String, required: true},
+  "teamHome": {type: String, required: true},
+  "goalsAway": {type: Number, required: true},
+  "goalsHome": {type: Number, required: true},
+  "playersAway": {type: Player, required: true},
+  "playersHome": {type: Player, required: true},
 };
 
 module.exports = {

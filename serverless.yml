@@ -84,6 +84,18 @@ functions:
       - http:
           path: player/{name}/series
           method: post
+  game-get:
+    handler: src/game.get
+    events:
+      - http:
+          path: game/{id}
+          method: get
+  game-create:
+    handler: src/game.create
+    events:
+      - http:
+          path: game
+          method: post
 #    Define function environment variables here
 #    environment:
 #      variable2: value2
