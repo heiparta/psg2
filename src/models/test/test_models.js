@@ -23,7 +23,7 @@ describe("CRUD", function () {
   it("should list series", function () {
     return Series.list()
       .then(function (keys) {
-        expect(keys).to.contain("series:bar");
+        expect(keys).to.contain("bar");
       });
   });
 

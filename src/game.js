@@ -1,6 +1,7 @@
 'use strict';
 
 const common = require('./common');
+const errors = require('./models/errors');
 const models = require('./models/index');
 const addCORS = common.addCORS;
 
@@ -8,6 +9,9 @@ exports.create = function (event, context, callback) {
   let model;
   return common.parseBody(event.body)
     .then(function (params) {
+      if (!params) {
+        throw new errors.RequiredPropertyMissingError("Missing property: series");
+      }
       model = new models.Game(params);
       return model.populate();
     })

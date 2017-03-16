@@ -110,7 +110,8 @@ ModelBase.prototype.save = function () {
 const Player = function (name) {
   this.name = name;
   if (this.name) {
-    this.username = name.toLowerCase();
+    this.name = this.name.replace(/^player:/, '');
+    this.username = this.name.toLowerCase();
   }
 };
 Player.prototype = Object.create(ModelBase.prototype);
@@ -132,6 +133,9 @@ Player.prototype.addToSeries = function (series) {
 
 const Series = function (name) {
   this.name = name;
+  if (this.name) {
+    this.name = this.name.replace(/^series:/, '');
+  }
   this.players = [];
 };
 Series.prototype = Object.create(ModelBase.prototype);
@@ -179,6 +183,12 @@ const Game = function (properties) {
       }
       self[k] = properties[k];
     });
+    if (self.goalsAway === self.goalsHome) {
+        throw new errors.InvalidParamError("Draws are not allowed");
+    }
+    self.playersAway = _.map(self.playersAway, function (p) { return new Player(p); });
+    self.playersHome = _.map(self.playersHome, function (p) { return new Player(p); });
+    self.series = new Series(self.series);
     if (!this.id) {
       this.id = uuid.v4();
     }
