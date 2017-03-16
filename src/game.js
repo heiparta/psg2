@@ -2,6 +2,7 @@
 
 const common = require('./common');
 const models = require('./models/index');
+const addCORS = common.addCORS;
 
 exports.create = function (event, context, callback) {
   let model;
@@ -14,10 +15,10 @@ exports.create = function (event, context, callback) {
       return model.save();
     })
     .then(function () {
-      return callback(null, {
+      return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({data: model.serialize()}),
-      });
+      }));
     })
     .catch(function (err) {
       console.log("Error in handler:", err);
@@ -31,12 +32,12 @@ exports.get = function (event, context, callback) {
   const model = new models.Game();
   return model.load(id)
     .then(function () {
-      return callback(null, {
+      return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({
           "data": model.serialize(),
         })
-      });
+      }));
     })
     .catch(function (err) {
       console.log("Error in handler:", err);

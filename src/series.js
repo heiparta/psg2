@@ -2,6 +2,7 @@
 
 const common = require('./common');
 const models = require('./models/index');
+const addCORS = common.addCORS;
 
 exports.create = function (event, context, callback) {
   const name = decodeURI(event.pathParameters.name);
@@ -11,10 +12,10 @@ exports.create = function (event, context, callback) {
   const series = new models.Series(name);
   return series.save()
     .then(function () {
-      return callback(null, {
+      return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({data: series.serialize()}),
-      });
+      }));
     })
     .catch(function (err) {
       console.log("Error in handler:", err);
@@ -28,13 +29,12 @@ exports.get = function (event, context, callback) {
   const series = new models.Series();
   return series.load(name)
     .then(function () {
-      console.log("BAE", series);
-      return callback(null, {
+      return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({
           "data": series.serialize(),
         })
-      });
+      }));
     })
     .catch(function (err) {
       console.trace("Error in handler:", err);
@@ -45,12 +45,12 @@ exports.get = function (event, context, callback) {
 exports.list = function (event, context, callback) {
   return models.Series.list()
     .then(function (response) {
-      return callback(null, {
+      return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({
           "data": response,
         })
-      });
+      }));
     })
     .catch(function (err) {
       console.log("Error in handler:", err);
