@@ -29,6 +29,9 @@ exports.get = function (event, context, callback) {
   const series = new models.Series();
   return series.load(series.key(name))
     .then(function () {
+      return series.populate(); // Populate player data
+    })
+    .then(function () {
       return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({
