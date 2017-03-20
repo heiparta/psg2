@@ -51,7 +51,7 @@ ModelBase.prototype.unpopulate = function () {
   this._isPopulated = false;
 };
 
-// Populate all ModelBase-inherited objects by replacing them with their keys
+// Populate all ModelBase-inherited objects by replacing them with instantiated objects of correct subclass
 ModelBase.prototype.populate = function (props) {
   var self = this;
   props = props || self.properties;

@@ -42,6 +42,24 @@ exports.get = function (event, context, callback) {
     });
 };
 
+exports.games = function (event, context, callback) {
+  const name = decodeURI(event.pathParameters.name);
+  const series = new models.Series();
+  return series.load(series.key(name))
+    .then(function () {
+      return callback(null, addCORS(event, {
+        statusCode: 200,
+        body: JSON.stringify({
+          "data": [],
+        })
+      }));
+    })
+    .catch(function (err) {
+      console.trace("Error in handler:", err);
+      return callback(null, common.getError(err.statusCode, err));
+    });
+};
+
 exports.list = function (event, context, callback) {
   return models.Series.list()
     .then(function (response) {

@@ -59,12 +59,27 @@ functions:
       - http:
           path: series/{name}
           method: get
+          parameters:
+            path:
+              name: true
   series-create:
     handler: src/series.create
     events:
       - http:
           path: series/{name}
           method: post
+          parameters:
+            path:
+              name: true
+  series-games:
+    handler: src/series.games
+    events:
+      - http:
+          path: series/{name}/games
+          method: get
+          parameters:
+            path:
+              name: true
 
   player-get:
     handler: src/player.get
@@ -72,18 +87,27 @@ functions:
       - http:
           path: player/{name}
           method: get
+          parameters:
+            path:
+              name: true
   player-create:
     handler: src/player.create
     events:
       - http:
           path: player/{name}
           method: post
+          parameters:
+            path:
+              name: true
   player-add-to-series:
     handler: src/player.addToSeries
     events:
       - http:
           path: player/{name}/series
           method: post
+          parameters:
+            path:
+              name: true
   game-get:
     handler: src/game.get
     events:

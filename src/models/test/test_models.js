@@ -11,7 +11,7 @@ const Game = models.Game;
 
 
 describe("CRUD", function () {
-  this.timeout(5000);
+  this.timeout(10000);
   let player1;
   let series;
   let game;
@@ -42,7 +42,13 @@ describe("CRUD", function () {
       .then(function () {
         expect(series.players.length).to.equal(1);
         expect(series.players[0]).to.equal(player1.key());
+        return series.populate();
       });
+  });
+
+  it("should serialize series", () => {
+    const serialized = series.serialize();
+    expect(serialized.players[0].username).to.equal(player1.username);
   });
 
   it("should create game", function () {
