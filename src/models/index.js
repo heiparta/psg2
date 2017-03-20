@@ -10,41 +10,43 @@ const ModelBase = function () {
   this._isPopulated = false;
 };
 
-ModelBase.prototype.key = function (id) {
-  id = id || this[this.idField];
-  return [this.keyPrefix, id].join(":");
+ModelBase.prototype.key = function (key) {
+  key = key || this[this.idField];
+  if (key.indexOf(`${this.keyPrefix}:`) !== 0) {
+    key = [this.keyPrefix, key].join(":");
+  }
+  return key;
 };
 
-ModelBase.prototype.load = function (id, options) {
+ModelBase.prototype.load = function (key, options) {
   const self = this;
   options = options || {};
-  const key = options.isKey ? id : this.key(id);
   return db.getModel(key)
     .tap(function (item) {
       if (!item) {
-        throw new errors.NotFoundError("Object not found: " + self.key(id));
+        throw new errors.NotFoundError("Object not found: " + key);
       }
-      _.forOwn(self.properties, function (pprops, key) {
-        self[key] = item[key];
+      _.forOwn(self.properties, function (pprops, k) {
+        self[k] = item[k];
       });
       self._isSaved = true;
     });
 };
 
-// "Unpopulate" all ModelBase-inherited objects by replacing them with their keys
+// "Unpopulate" all ModelBase-inherited objects by replacing them with object representations
 ModelBase.prototype.unpopulate = function () {
   var self = this;
-  function keyify (obj) {
+  function objectify (obj) {
     if (_.isArray(obj)) {
-      return obj.map(keyify);
+      return obj.map(objectify);
     } else if (obj instanceof ModelBase) {
-      return obj.key();
+      return obj.serialize();
     } else {
       return obj;
     }
   }
   _.forOwn(this.properties, function (pprops, p) {
-    self[p] = keyify(self[p]);
+    self[p] = objectify(self[p]);
   });
   this._isPopulated = false;
 };
@@ -62,8 +64,12 @@ ModelBase.prototype.populate = function (props) {
         return objectify(o, Type);
       });
     } else if (Type.prototype instanceof ModelBase) {
-      var newObject = new Type();
-      promises.push(newObject.load(obj, {isKey: true})
+      const newObject = new Type();
+      let objectKey = obj; // populate from string.key
+      if (obj instanceof Object) {
+        objectKey = newObject.key(obj[newObject.idField]); // populate from object's .key property
+      }
+      promises.push(newObject.load(objectKey)
         .then(function () {
           return newObject.populate();
         }));
@@ -81,14 +87,10 @@ ModelBase.prototype.populate = function (props) {
     });
 };
 
-ModelBase.populate = function () {
-  // no-op, inherited class must implement
-};
-
 
 ModelBase.prototype.serialize = function () {
   this.unpopulate();
-  return _.pick(this, Object.keys(this.properties));
+  return _.merge({key: this.key()}, _.pick(this, Object.keys(this.properties)));
 };
 
 ModelBase.prototype.isSaved = function () {
@@ -97,11 +99,10 @@ ModelBase.prototype.isSaved = function () {
 
 ModelBase.prototype.save = function () {
   const self = this;
-  const key = [this.keyPrefix, this[this.idField]].join(":");
   const props = this.serialize();
   props.modified = Date.now();
 
-  return db.saveModel(key, props)
+  return db.saveModel(this.key(), props)
     .tap(function () {
       self._isSaved = true;
     });
@@ -186,11 +187,8 @@ const Game = function (properties) {
     if (self.goalsAway === self.goalsHome) {
         throw new errors.InvalidParamError("Draws are not allowed");
     }
-    self.playersAway = _.map(self.playersAway, function (p) { return new Player(p); });
-    self.playersHome = _.map(self.playersHome, function (p) { return new Player(p); });
-    self.series = new Series(self.series);
-    if (!this.id) {
-      this.id = uuid.v4();
+    if (!this.uuid) {
+      this.uuid = uuid.v4();
     }
     if (!this.timestamp) {
       this.timestamp = Date.now();
@@ -199,9 +197,9 @@ const Game = function (properties) {
 };
 Game.prototype = Object.create(ModelBase.prototype);
 Game.prototype.keyPrefix = "game";
-Game.prototype.idField = "id";
+Game.prototype.idField = "uuid";
 Game.prototype.properties = {
-  "id": {type: String},
+  "uuid": {type: String},
   "timestamp": {type: Number},
   "series": {type: Series, required: true},
   "teamAway": {type: String, required: true},

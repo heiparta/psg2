@@ -27,7 +27,7 @@ exports.create = function (event, context, callback) {
 exports.get = function (event, context, callback) {
   const name = decodeURI(event.pathParameters.name);
   const series = new models.Series();
-  return series.load(name)
+  return series.load(series.key(name))
     .then(function () {
       return callback(null, addCORS(event, {
         statusCode: 200,

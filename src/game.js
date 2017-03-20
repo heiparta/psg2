@@ -34,7 +34,7 @@ exports.create = function (event, context, callback) {
 exports.get = function (event, context, callback) {
   const id = decodeURI(event.pathParameters.id);
   const model = new models.Game();
-  return model.load(id)
+  return model.load(model.key(id))
     .then(function () {
       return callback(null, addCORS(event, {
         statusCode: 200,

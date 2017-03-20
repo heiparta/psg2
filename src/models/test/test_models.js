@@ -11,6 +11,7 @@ const Game = models.Game;
 
 
 describe("CRUD", function () {
+  this.timeout(5000);
   let player1;
   let series;
   let game;
@@ -33,7 +34,15 @@ describe("CRUD", function () {
   });
 
   it("should add player to series", function () {
-    return player1.addToSeries(series.name);
+    return player1.addToSeries(series.name)
+      .then(function () {
+        // refresh the series to see that player was added
+        return series.load(series.key());
+      })
+      .then(function () {
+        expect(series.players.length).to.equal(1);
+        expect(series.players[0]).to.equal(player1.key());
+      });
   });
 
   it("should create game", function () {
@@ -55,9 +64,18 @@ describe("CRUD", function () {
       .then(function () {
         expect(game.playersHome[0].name).to.equal(player1.name);
         expect(game.series.name).to.equal(series.name);
-        game.unpopulate();
-        expect(game.playersHome[0]).to.equal(player1.key());
-        expect(game.series).to.equal(series.key());
+      });
+  });
+
+  it("should load game", function () {
+    const loaded = new Game();
+    return loaded.load(game.key())
+      .then(function () {
+        return loaded.populate();
+      })
+      .then(function () {
+        expect(game.playersHome[0].name).to.equal(loaded.playersHome[0].name);
+        expect(game.uuid).to.equal(loaded.uuid);
       });
   });
 

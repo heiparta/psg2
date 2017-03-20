@@ -27,7 +27,7 @@ exports.create = function (event, context, callback) {
 exports.get = function (event, context, callback) {
   const name = decodeURI(event.pathParameters.name);
   const model = new models.Player(name);
-  return model.load(name)
+  return model.load(model.key(name))
     .then(function () {
       return callback(null, addCORS(event, {
         statusCode: 200,
@@ -49,8 +49,8 @@ exports.addToSeries = function (event, context, callback) {
   return common.parseBody(event.body)
     .then(function (params) {
       return Promise.all([
-        player.load(name),
-        series.load(params.series),
+        player.load(player.key()),
+        series.load(series.key()),
       ]);
     })
     .then(function () {
