@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "MODELS_TABLE='psg2-dev-models' mocha test/test_*.js"
   },
   "author": "Heikki Partanen <heikki.partanen@f-secure.com>",
   "license": "ISC",

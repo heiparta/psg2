@@ -107,6 +107,9 @@ ModelBase.prototype.save = function () {
     });
 };
 
+const Credentials = function () {
+};
+
 const Player = function (name) {
   this.name = name;
   if (this.name) {
@@ -225,6 +228,7 @@ Game.prototype.properties = {
 
 module.exports = {
   Series: Series,
+  Credentials: Credentials,
   Player: Player,
   Game: Game,
 };

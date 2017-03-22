@@ -1,7 +1,7 @@
 'use strict';
 
 const common = require('./common');
-const models = require('./models/index');
+const models = require('./lib/models');
 const addCORS = common.addCORS;
 
 exports.create = function (event, context, callback) {

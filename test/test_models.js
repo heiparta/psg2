@@ -5,7 +5,7 @@ const _ = require('lodash');
 const chai = require('chai');
 const expect = chai.expect;
 
-const models = require('../index');
+const models = require('../src/lib/models');
 const Series = models.Series;
 const Player = models.Player;
 const Game = models.Game;
