@@ -30,5 +30,3 @@ module.exports.parseBody = function (raw) {
       return JSON.parse(raw);
     });
 };
-
-
