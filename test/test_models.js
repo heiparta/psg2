@@ -70,7 +70,10 @@ describe("CRUD", function () {
       playersHome: [player1.key()],
       playersAway: [],
     });
-    return game.save();
+    return game.populate()
+      .then(function () {
+        return game.save();
+      });
   });
 
   it("should populate and unpopulate game", function () {

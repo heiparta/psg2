@@ -18,6 +18,7 @@ module.exports.getError = function (statusCode, err) {
   const body = {
     "error": err
   };
+  console.error({err: err, statusCode: statusCode}, "Returning error");
   return ({
     statusCode: statusCode,
     body: JSON.stringify(body),

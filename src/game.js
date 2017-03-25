@@ -13,7 +13,7 @@ exports.create = function (event, context, callback) {
         throw new errors.RequiredPropertyMissingError("Missing property: series");
       }
       model = new models.Game(params);
-      return model.populate();
+      return model.populate(); // Populate to verify all keys
     })
     .then(function () {
       return model.save();

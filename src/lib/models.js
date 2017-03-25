@@ -34,13 +34,18 @@ ModelBase.prototype.load = function (key, options) {
 };
 
 // "Unpopulate" all ModelBase-inherited objects by replacing them with object representations
-ModelBase.prototype.unpopulate = function () {
+ModelBase.prototype.unpopulate = function (options) {
   var self = this;
+  options = options || {keyify: false};
   function objectify (obj) {
     if (_.isArray(obj)) {
       return obj.map(objectify);
     } else if (obj instanceof ModelBase) {
-      return obj.serialize();
+      if (options.keyify) {
+        return obj.key();
+      } else {
+        return obj.serialize();
+      }
     } else {
       return obj;
     }
@@ -92,22 +97,24 @@ ModelBase.prototype.serialize = function () {
   return _.merge({key: this.key()}, _.pick(this, Object.keys(this.properties)));
 };
 
+ModelBase.prototype.keyify = function () {
+  this.unpopulate({keyify: true});
+  return _.merge({key: this.key()}, _.pick(this, Object.keys(this.properties)));
+};
+
 ModelBase.prototype.isSaved = function () {
   return Boolean(this._isSaved);
 };
 
 ModelBase.prototype.save = function () {
   const self = this;
-  const props = this.serialize();
+  const props = this.keyify();
   props.modified = Date.now();
 
   return db.saveModel(this.key(), props)
     .tap(function () {
       self._isSaved = true;
     });
-};
-
-const Credentials = function () {
 };
 
 const Player = function (name) {
@@ -228,7 +235,6 @@ Game.prototype.properties = {
 
 module.exports = {
   Series: Series,
-  Credentials: Credentials,
   Player: Player,
   Game: Game,
 };
