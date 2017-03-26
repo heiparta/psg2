@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const db = require('./db');
 const errors = require('./errors');
+const Promise = require('bluebird');
 const uuid = require('uuid');
 
 const ModelBase = function () {
@@ -226,6 +227,33 @@ Game.prototype.properties = {
   "goalsHome": {type: Number, required: true},
   "playersAway": {type: Player, required: true},
   "playersHome": {type: Player, required: true},
+};
+
+Game.prototype.updatePlayerStats = function () {
+  // Update player stats
+  const winners = this.goalsAway > this.goalsHome ? this.playersAway : this.playersHome;
+  const statPromises = this.playersAway.concat(this.playersHome).map(function (p) {
+    const params = {
+      "statNumberOfGames": {
+        "step": 1,
+      },
+      "statCurrentStreak": {
+        "step": -1,
+      },
+    };
+    if (winners.indexOf(p) !== -1) {
+      params.statNumberOfWins = {
+        "step": 1,
+      };
+      params.statCurrentStreak = {
+        "step": 1,
+      };
+    }
+    console.log("updating player", p, params);
+    return db.incrementFields(p, params);
+  });
+  console.log("GEFA", statPromises.length);
+  return Promise.all(statPromises);
 };
 
 module.exports = {

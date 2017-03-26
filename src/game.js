@@ -1,7 +1,6 @@
 'use strict';
 
 const common = require('./common');
-const db = require('./lib/db');
 const errors = require('./lib/errors');
 const models = require('./lib/models');
 const addCORS = common.addCORS;
@@ -17,25 +16,7 @@ exports.create = function (event, context, callback) {
       return game.populate(); // Populate to verify all keys
     })
     .then(function () {
-      return game.save();
-    })
-    .then(function () {
-      // Update player stats
-      const winners = game.goalsAway > game.goalsHome ? game.playersAway : game.playersHome;
-      const statPromises = game.playersAway.concat(game.playersHome).map(function (p) {
-        const params = {
-          "statNumberOfGames": {
-            "step": 1,
-          },
-        };
-        if (winners.indexOf(p) !== -1) {
-          params.statNumberOfWins = {
-            "step": 1,
-          };
-        }
-        return db.incrementFields(p, params);
-      });
-      return Promise.all(statPromises);
+      return Promise.all([game.save(), game.updatePlayerStats()]);
     })
     .then(function () {
       return callback(null, addCORS(event, {
