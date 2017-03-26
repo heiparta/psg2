@@ -130,7 +130,9 @@ Player.prototype.idField = "username";
 Player.prototype.properties = {
   "name": {type: String, required: true},
   "username": {type: String},
-  "stats": {type: Object},
+  "statNumberOfGames": {type: Object},
+  "statNumberOfWins": {type: Object},
+  "statCurrentStreak": {type: Object},
 };
 
 Player.prototype.addToSeries = function (series) {
@@ -145,14 +147,7 @@ Player.prototype.populate = function () {
   // Customized populate to add stats to player rows that are missing them
   ModelBase.prototype.populate.bind(this)();
 
-  if (!this.stats) {
-    this.stats = {
-      numberOfGames: 3,
-      numberOfWins: 1,
-      winPercentage: 33,
-      currentStreak: 1,
-    };
-  }
+  this.statWinPercentage = Math.floor(1000 * (this.statNumberOfWins / (this.statNumberOfGames || 1))) / 10;
 };
 
 const Series = function (name) {
