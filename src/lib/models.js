@@ -249,10 +249,9 @@ Game.prototype.updatePlayerStats = function () {
         "step": 1,
       };
     }
-    console.log("updating player", p, params);
+    // TODO fix resetting of streaks
     return db.incrementFields(p, params);
   });
-  console.log("GEFA", statPromises.length);
   return Promise.all(statPromises);
 };
 
