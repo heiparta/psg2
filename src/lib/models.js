@@ -106,12 +106,12 @@ ModelBase.prototype.isSaved = function () {
   return Boolean(this._isSaved);
 };
 
-ModelBase.prototype.save = function () {
+ModelBase.prototype.save = function (options) {
   const self = this;
   const props = this.keyify();
   props.modified = Date.now();
 
-  return db.saveModel(this.key(), props)
+  return db.saveModel(this.key(), props, options)
     .tap(function () {
       self._isSaved = true;
     });

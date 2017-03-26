@@ -5,6 +5,7 @@ const _ = require('lodash');
 const chai = require('chai');
 const expect = chai.expect;
 
+const db = require('../src/lib/db');
 const models = require('../src/lib/models');
 const Series = models.Series;
 const Player = models.Player;
@@ -33,7 +34,21 @@ describe("CRUD", function () {
   it("should create players", function () {
     player1 = new Player("Foobar");
     player2 = new Player("Ööliä");
-    return Promise.all([player1.save(), player2.save()]);
+    return Promise.all([player1.save({upsert: "ignore"}), player2.save({upsert: "ignore"})]);
+  });
+
+  it("should increment player stats", function () {
+    return db.incrementFields(player1.key(), {
+      "statNumberOfGames": {
+        "step": 1,
+      },
+      "statNumberOfWins": {
+        "step": 1,
+      }
+    })
+    .then(function (item) {
+      expect(item.statNumberOfWins).to.be.above(0);
+    });
   });
 
   it("should add player to series", function () {
