@@ -109,8 +109,15 @@ ModelBase.prototype.isSaved = function () {
 
 ModelBase.prototype.save = function (options) {
   const self = this;
-  const props = this.keyify();
+  let props = this.keyify();
   props.modified = Date.now();
+  // Filter out calculated fields that not to be saved to DB
+  props = _.pickBy(props, function (v, k) {
+    if (self.properties[k] && self.properties[k].shallow) {
+      return false;
+    }
+    return true;
+  });
 
   return db.saveModel(this.key(), props, options)
     .tap(function () {
@@ -131,9 +138,10 @@ Player.prototype.idField = "username";
 Player.prototype.properties = {
   "name": {type: String, required: true},
   "username": {type: String},
-  "statNumberOfGames": {type: Object},
-  "statNumberOfWins": {type: Object},
-  "statCurrentStreak": {type: Object},
+  "statNumberOfGames": {type: Number},
+  "statNumberOfWins": {type: Number},
+  "statCurrentStreak": {type: Number},
+  "statWinPercentage": {type: Number, shallow: true}, // not saved to DB
 };
 
 Player.prototype.addToSeries = function (series) {

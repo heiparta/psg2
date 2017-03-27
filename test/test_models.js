@@ -79,7 +79,6 @@ describe("CRUD", function () {
   it("should increment player stats", function () {
     return game.updatePlayerStats()
       .spread(function (player1Stats) {
-        console.log("SSS", player1Stats);
         expect(player1Stats.statNumberOfWins).to.be.above(0);
       });
   });
@@ -102,6 +101,21 @@ describe("CRUD", function () {
       .then(function () {
         expect(game.playersHome[0].name).to.equal(loaded.playersHome[0].name);
         expect(game.uuid).to.equal(loaded.uuid);
+      });
+  });
+
+  it("should have valid series stats", function () {
+    const seriesKey = series.key();
+    series = new Series();
+    return series.load(seriesKey)
+      .then(function () {
+        return series.populate();
+      })
+      .then(function () {
+        expect(series.players.length).to.equal(2);
+        const p = _.find(series.players, _.matchesProperty('username', 'foobar'));
+        expect(p.statWinPercentage).to.be.above(0);
+        expect(p.statNumberOfWins).to.be.above(0);
       });
   });
 
