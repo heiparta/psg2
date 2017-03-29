@@ -9,9 +9,13 @@ AWS.config.update({region: "eu-west-1"});
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 Promise.promisifyAll(dynamodb);
 
+function getTable(tableName) {
+  return `${process.env.DEPLOYMENT}-${tableName}`;
+}
+
 module.exports.addToListProperty = function (id, propertyName, value) {
   const params = {
-    TableName: process.env.MODELS_TABLE,
+    TableName: getTable('models'),
     Key: {
       id: id,
     },
@@ -35,14 +39,21 @@ module.exports.addToListProperty = function (id, propertyName, value) {
     });
 };
 
-module.exports.getModel = function (id) {
+module.exports.getModel = function (id, options) {
+  options = options || {};
   const params = {
-    TableName: process.env.MODELS_TABLE,
+    TableName: getTable(options.tableName || 'models'),
     KeyConditionExpression: "id = :id",
     ExpressionAttributeValues: {
       ":id": id,
     },
   };
+  if (options.range) {
+    // Query one row
+    params.KeyConditionExpression += " AND #range = :range";
+    params.ExpressionAttributeNames = {"#range": "range"};
+    params.ExpressionAttributeValues[":range"] = options.range;
+  }
   console.log("Querying", params);
   return dynamodb.queryAsync(params)
     .then(function (result) {
@@ -52,14 +63,15 @@ module.exports.getModel = function (id) {
       // Expecting just one model
       return result.Items[0];
     });
-
 };
 
-module.exports.saveModel = function (id, item, options) {
-  options = options || {upsert: 'overwrite'}; // Overwrite items by default
-  item.id = id;
+module.exports.saveModel = function (item, options) {
+  options = options || {};
+  if (!options.upsert) {
+    options.upsert = 'overwrite'; // Overwrite items by default
+  }
   const params = {
-    TableName: process.env.MODELS_TABLE,
+    TableName: getTable(options.tableName || 'models'),
     Item: item,
   };
   if (options.upsert !== "overwrite") {
@@ -83,7 +95,7 @@ module.exports.saveModel = function (id, item, options) {
 // }
 module.exports.incrementFields = function (id, increments) {
   const params = {
-    TableName: process.env.MODELS_TABLE,
+    TableName: getTable('models'),
     Key: {id: id},
     ExpressionAttributeNames: {},
     ExpressionAttributeValues: {},

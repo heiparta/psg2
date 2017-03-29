@@ -8,7 +8,8 @@ const errors = require('./errors');
 module.exports.saveUser = function (user, password, properties) {
   const salt = bcrypt.genSaltSync();
   const hash = bcrypt.hashSync(password, salt);
-  return db.saveModel(`credentials:${user}`, {
+  return db.saveModel({
+    id: `credentials:${user}`,
     user: user,
     salt: salt,
     hash: hash,

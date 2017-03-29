@@ -94,7 +94,7 @@ describe("CRUD", function () {
 
   it("should load game", function () {
     const loaded = new Game();
-    return loaded.load(game.key())
+    return loaded.load(game.id, {range: game.range})
       .then(function () {
         return loaded.populate();
       })

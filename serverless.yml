@@ -10,7 +10,7 @@ provider:
   memorySize: 256
 
   environment:
-    MODELS_TABLE: ${self:service}-${opt:stage, self:provider.stage}-models
+    DEPLOYMENT: ${self:service}-${opt:stage, self:provider.stage}
 
   stage: dev
   region: eu-west-1
@@ -36,7 +36,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.MODELS_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DEPLOYMENT}-models"
 
 #package:
   #include:
@@ -163,4 +163,26 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.MODELS_TABLE}
+        TableName: ${self:provider.environment.DEPLOYMENT}-models
+    RangeModelsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+          -
+            AttributeName: range
+            AttributeType: N
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+          -
+            AttributeName: range
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DEPLOYMENT}-rangemodels

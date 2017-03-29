@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "MODELS_TABLE='psg2-dev-models' mocha test/test_*.js"
+    "test": "DEPLOYMENT='psg2-dev' mocha test/test_*.js"
   },
   "author": "Heikki Partanen <heikki.partanen@f-secure.com>",
   "license": "ISC",

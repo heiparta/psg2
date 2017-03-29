@@ -4,7 +4,6 @@ const _ = require('lodash');
 const db = require('./db');
 const errors = require('./errors');
 const Promise = require('bluebird');
-const uuid = require('uuid');
 
 const ModelBase = function () {
   this._isSaved = false;
@@ -22,7 +21,10 @@ ModelBase.prototype.key = function (key) {
 ModelBase.prototype.load = function (key, options) {
   const self = this;
   options = options || {};
-  return db.getModel(key)
+  if (!options.table && this.table) {
+    options.tableName = this.table;
+  }
+  return db.getModel(key, options)
     .tap(function (item) {
       if (!item) {
         throw new errors.NotFoundError("Object not found: " + key);
@@ -70,9 +72,11 @@ ModelBase.prototype.populate = function (options) {
       });
     } else if (Type.prototype instanceof ModelBase) {
       const newObject = new Type();
-      let objectKey = obj; // populate from string.key
+      let objectKey = obj; // populate from string-key
       if (obj instanceof Object) {
-        objectKey = newObject.key(obj[newObject.idField]); // populate from object's .key property
+        // FIXME, changed recently, may break tests
+        //objectKey = newObject.key(obj[newObject.idField]); // populate from object's .key property
+        objectKey = newObject.key(obj.key); // populate from object's .key property
       }
       promises.push(newObject.load(objectKey)
         .then(function () {
@@ -108,18 +112,25 @@ ModelBase.prototype.isSaved = function () {
 };
 
 ModelBase.prototype.save = function (options) {
+  options = options || {};
+  if (!options.table && this.table) {
+    options.tableName = this.table;
+  }
   const self = this;
   let props = this.keyify();
-  props.modified = Date.now();
   // Filter out calculated fields that not to be saved to DB
   props = _.pickBy(props, function (v, k) {
-    if (self.properties[k] && self.properties[k].shallow) {
+    if (!self.properties[k] || self.properties[k].shallow) {
       return false;
     }
     return true;
   });
+  props.modified = Date.now();
 
-  return db.saveModel(this.key(), props, options)
+  if (!props.id) {
+    props.id = this.key();
+  }
+  return db.saveModel(props, options)
     .tap(function () {
       self._isSaved = true;
     });
@@ -203,7 +214,7 @@ Series.list = function () {
 };
 
 const Game = function (properties) {
-  var self = this;
+  const self = this;
   if (properties) {
     _.forOwn(this.properties, function (pprops, k) {
       if (pprops.required && properties[k] === undefined) {
@@ -214,20 +225,21 @@ const Game = function (properties) {
     if (self.goalsAway === self.goalsHome) {
         throw new errors.InvalidParamError("Draws are not allowed");
     }
-    if (!this.uuid) {
-      this.uuid = uuid.v4();
+    if (!this.id) {
+      const seriesName = this.series.name || this.series.split(':')[1];
+      this.id = `game:${seriesName}`;
     }
-    if (!this.timestamp) {
-      this.timestamp = Date.now();
+    if (!this.range) {
+      this.range = Date.now();
     }
   }
 };
 Game.prototype = Object.create(ModelBase.prototype);
 Game.prototype.keyPrefix = "game";
-Game.prototype.idField = "uuid";
+Game.prototype.table = "rangemodels";
 Game.prototype.properties = {
-  "uuid": {type: String},
-  "timestamp": {type: Number},
+  "id": {type: String},
+  "range": {type: Number},
   "series": {type: Series, required: true},
   "teamAway": {type: String, required: true},
   "teamHome": {type: String, required: true},
@@ -235,6 +247,17 @@ Game.prototype.properties = {
   "goalsHome": {type: Number, required: true},
   "playersAway": {type: Player, required: true},
   "playersHome": {type: Player, required: true},
+};
+
+Game.prototype.key = function (key) {
+  if (!key) {
+    let seriesName = this.series.name || this.series;
+    if (seriesName.indexOf("series:") !== 0) {
+      seriesName = seriesName.split(":")[1];
+    }
+    key = `game:${seriesName}:${this.range}`;
+  }
+  return key;
 };
 
 Game.prototype.updatePlayerStats = function () {
