@@ -50,10 +50,13 @@ exports.games = function (event, context, callback) {
   const series = new models.Series();
   return series.load(series.key(name))
     .then(function () {
+      return series.getGames(5);
+    })
+    .then(function (games) {
       return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({
-          "data": [],
+          "data": games,
         })
       }));
     })

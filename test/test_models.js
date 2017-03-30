@@ -119,4 +119,12 @@ describe("CRUD", function () {
       });
   });
 
+  it("should return latest games of series", function () {
+    return series.getGames(5)
+      .then(function (games) {
+        expect(games.length).to.be.above(0).and.below(6);
+        expect(games[0].range).to.equal(game.range);
+      });
+  });
+
 });

@@ -201,6 +201,13 @@ Series.prototype.save = function () {
     });
 };
 
+Series.prototype.getGames = function (count) {
+  return db.queryModels(`game:${this.name}`, {
+    descending: true,
+    limit: 5,
+  });
+};
+
 Series.list = function () {
   return db.getModel("serieslist")
     .then(function (item) {

@@ -65,6 +65,41 @@ module.exports.getModel = function (id, options) {
     });
 };
 
+module.exports.queryModels = function (id, options) {
+  options = options || {};
+  const params = {
+    TableName: getTable('rangemodels'),
+    KeyConditionExpression: "id = :id",
+    ExpressionAttributeValues: {
+      ":id": id,
+    },
+  };
+  if (options.descending) {
+    params.ScanIndexForward = false;
+  }
+  if (options.limit) {
+    params.Limit = options.limit;
+  }
+  if (options.lessThan) {
+    params.KeyConditionExpression += " AND #range < :range";
+    params.ExpressionAttributeNames = {"#range": "range"};
+    params.ExpressionAttributeValues[":range"] = options.lessThan;
+  }
+  if (options.moreThan) {
+    params.KeyConditionExpression += " AND #range > :range";
+    params.ExpressionAttributeNames = {"#range": "range"};
+    params.ExpressionAttributeValues[":range"] = options.moreThan;
+  }
+  console.log("Querying", params);
+  return dynamodb.queryAsync(params)
+    .then(function (result) {
+      if (result.Items.length === 0) {
+        return null;
+      }
+      return result.Items;
+    });
+};
+
 module.exports.saveModel = function (item, options) {
   options = options || {};
   if (!options.upsert) {
