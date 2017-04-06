@@ -39,6 +39,16 @@ module.exports.addToListProperty = function (id, propertyName, value) {
     });
 };
 
+const cacheTime = 5 * 1000; // Cache all fetched models for 5 seconds
+const modelsCache = module.exports.modelsCache = {};
+const cacheableModels = ["player", "game"];
+function isCacheable (id) {
+  if (cacheableModels.indexOf(id.split(":")[0]) !== -1) {
+    return true;
+  }
+  return false;
+}
+
 module.exports.getModel = function (id, options) {
   options = options || {};
   const params = {
@@ -48,11 +58,21 @@ module.exports.getModel = function (id, options) {
       ":id": id,
     },
   };
+  let cacheKey = id;
   if (options.range) {
     // Query one row
     params.KeyConditionExpression += " AND #range = :range";
     params.ExpressionAttributeNames = {"#range": "range"};
     params.ExpressionAttributeValues[":range"] = options.range;
+    cacheKey += `:${options.range}`;
+  }
+  const cacheEntry = modelsCache[cacheKey];
+  if (cacheEntry) {
+    if (Date.now() < cacheEntry.expiry) {
+      console.log("Returning cached entry", cacheKey);
+      return Promise.resolve(cacheEntry.item);
+    }
+    delete modelsCache[cacheKey]; // Entry had expired
   }
   console.log("Querying", params);
   return dynamodb.queryAsync(params)
@@ -60,7 +80,12 @@ module.exports.getModel = function (id, options) {
       if (result.Items.length === 0) {
         return null;
       }
-      // Expecting just one model
+      if (isCacheable(cacheKey)) {
+        modelsCache[cacheKey] = {
+          expiry: Date.now() + cacheTime,
+          item: result.Items[0],
+        };
+      }
       return result.Items[0];
     });
 };
@@ -114,6 +139,18 @@ module.exports.saveModel = function (item, options) {
   }
   console.log("Saving", params);
   return dynamodb.putAsync(params)
+    .tap(function () {
+      let cacheKey = item.id;
+      if (item.range) {
+        cacheKey += `:${item.range}`;
+      }
+      if (isCacheable(cacheKey)) {
+        modelsCache[cacheKey] = {
+          expiry: Date.now() + cacheTime,
+          item: item,
+        };
+      }
+    })
     .catch(function (err) {
       if (err.code === "ConditionalCheckFailedException" && options.upsert === "ignore") {
         // Already exists, expected to ignore error
@@ -145,6 +182,7 @@ module.exports.incrementFields = function (id, increments) {
   params.UpdateExpression = "ADD " + expressionParts.join(', ');
   return dynamodb.update(params).promise()
     .then(function (result) {
+      delete modelsCache[id];
       return result.Attributes;
     });
 };
