@@ -194,7 +194,7 @@ Series.prototype.save = function () {
         .catch(function (err) {
           // Series list missing, create it and add again
           if (err.code === "ValidationException") {
-            return db.saveModel("serieslist", {series_keys: [self.key()], modified: Date.now()});
+            return db.saveModel({id: "serieslist", series_keys: [self.key()], modified: Date.now()});
           }
           throw err;
         });

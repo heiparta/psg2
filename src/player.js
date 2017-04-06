@@ -45,9 +45,10 @@ exports.get = function (event, context, callback) {
 exports.addToSeries = function (event, context, callback) {
   const name = decodeURI(event.pathParameters.name);
   const player = new models.Player(name);
-  const series = new models.Series(name);
+  let series;
   return common.parseBody(event.body)
     .then(function (params) {
+      series = new models.Series(params.series);
       return Promise.all([
         player.load(player.key()),
         series.load(series.key()),
