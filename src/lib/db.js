@@ -30,6 +30,9 @@ module.exports.addToListProperty = function (id, propertyName, value) {
     },
   };
   return dynamodb.updateAsync(params)
+    .tap(function () {
+      delete modelsCache[id];
+    })
     .catch(function (err) {
       if (err.code === "ConditionalCheckFailedException") {
         // Already exists in the list, all good
@@ -41,7 +44,7 @@ module.exports.addToListProperty = function (id, propertyName, value) {
 
 const cacheTime = 5 * 1000; // Cache all fetched models for 5 seconds
 const modelsCache = module.exports.modelsCache = {};
-const cacheableModels = ["player", "game"];
+const cacheableModels = ["series", "player", "game"];
 function isCacheable (id) {
   if (cacheableModels.indexOf(id.split(":")[0]) !== -1) {
     return true;
