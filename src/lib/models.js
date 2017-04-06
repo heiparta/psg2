@@ -205,6 +205,15 @@ Series.prototype.getGames = function (count) {
   return db.queryModels(`game:${this.name}`, {
     descending: true,
     limit: 5,
+  })
+  .then(function (games) {
+    games = games.map(function (item) {
+      return new Game(item);
+    });
+    return Promise.all(games.map(function (g) { return g.populate(); }))
+      .then(function () {
+        return games;
+      });
   });
 };
 
