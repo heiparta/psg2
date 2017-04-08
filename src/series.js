@@ -50,7 +50,7 @@ exports.games = function (event, context, callback) {
   const series = new models.Series();
   return series.load(series.key(name))
     .then(function () {
-      return series.getGames(5);
+      return series.getGames(30);
     })
     .then(function (games) {
       return callback(null, addCORS(event, {

@@ -203,7 +203,7 @@ Series.prototype.save = function () {
 Series.prototype.getGames = function (count) {
   return db.queryModels(`game:${this.name}`, {
     descending: true,
-    limit: 5,
+    limit: count,
   })
   .then(function (games) {
     games = games.map(function (item) {
