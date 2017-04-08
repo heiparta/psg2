@@ -149,10 +149,7 @@ Player.prototype.idField = "username";
 Player.prototype.properties = {
   "name": {type: String, required: true},
   "username": {type: String},
-  "statNumberOfGames": {type: Number},
-  "statNumberOfWins": {type: Number},
-  "statCurrentStreak": {type: Number},
-  "statWinPercentage": {type: Number, shallow: true}, // not saved to DB
+  "stats": {type: Object, shallow: true}, // not saved to DB
 };
 
 Player.prototype.addToSeries = function (series) {
@@ -165,8 +162,6 @@ Player.prototype.addToSeries = function (series) {
 
 Player.prototype.populate = function () {
   ModelBase.prototype.populate.bind(this)();
-
-  this.statWinPercentage = Math.floor(1000 * ((this.statNumberOfWins || 0) / (this.statNumberOfGames || 1))) / 10;
 };
 
 const Series = function (name) {
@@ -213,6 +208,46 @@ Series.prototype.getGames = function (count) {
       .then(function () {
         return games;
       });
+  });
+};
+
+Series.prototype.calculatePlayerStats = function (games) {
+  const self = this;
+  this.players.forEach(function (p) { p.stats = {games: 0, wins: 0, streak: 0}; });
+  const endedStreaks = {};
+
+  games.forEach(function (g) {
+    const winners = _.map(g.goalsAway > g.goalsHome ? g.playersAway : g.playersHome, 'username');
+    const losers = _.map(g.goalsAway > g.goalsHome ? g.playersHome : g.playersAway, 'username');
+    self.players.forEach(function (p) {
+      if (winners.indexOf(p.username) !== -1) {
+        p.stats.wins++;
+        p.stats.games++;
+        if (!endedStreaks[p.username]) {
+          if (p.stats.streak >= 0) {
+            // Continue streak
+            p.stats.streak++;
+          } else {
+            // Losing streak ended
+            endedStreaks[p.username] = true;
+          }
+        }
+      } else if (losers.indexOf(p.username) !== -1) {
+        p.stats.games++;
+        if (!endedStreaks[p.username]) {
+          if (p.stats.streak <= 0) {
+            // Continue streak
+            p.stats.streak--;
+          } else {
+            // Winning streak ended
+            endedStreaks[p.username] = true;
+          }
+        }
+      }
+    });
+  });
+  this.players.forEach(function (p) {
+    p.stats.winPercentage = Math.floor(1000 * ((p.stats.wins || 0) / (p.stats.games || 1))) / 10;
   });
 };
 
@@ -273,32 +308,6 @@ Game.prototype.key = function (key) {
     key = `game:${seriesName}:${this.range}`;
   }
   return key;
-};
-
-Game.prototype.updatePlayerStats = function () {
-  // Update player stats
-  const winners = this.goalsAway > this.goalsHome ? this.playersAway : this.playersHome;
-  const statPromises = this.playersAway.concat(this.playersHome).map(function (p) {
-    const params = {
-      "statNumberOfGames": {
-        "step": 1,
-      },
-      "statCurrentStreak": {
-        "step": -1,
-      },
-    };
-    if (winners.indexOf(p) !== -1) {
-      params.statNumberOfWins = {
-        "step": 1,
-      };
-      params.statCurrentStreak = {
-        "step": 1,
-      };
-    }
-    // TODO fix resetting of streaks
-    return db.incrementFields(p, params);
-  });
-  return Promise.all(statPromises);
 };
 
 module.exports = {

@@ -54,10 +54,8 @@ describe("CRUD", function () {
     const serialized = series.serialize();
     let p = _.find(serialized.players, _.matchesProperty('username', 'foobar'));
     expect(p).to.be.ok;
-    expect(p.statNumberOfGames).to.be.above(0);
     p = _.find(serialized.players, _.matchesProperty('username', 'ööliä'));
     expect(p).to.be.ok;
-    expect(p.statNumberOfGames).to.be.above(0);
   });
 
   it("should create game", function () {
@@ -67,19 +65,12 @@ describe("CRUD", function () {
       teamHome: "CBJ",
       goalsAway: 1,
       goalsHome: 2,
+      playersAway: [player2.key()],
       playersHome: [player1.key()],
-      playersAway: [],
     });
     return game.populate()
       .then(function () {
         return game.save();
-      });
-  });
-
-  it("should increment player stats", function () {
-    return game.updatePlayerStats()
-      .spread(function (player1Stats) {
-        expect(player1Stats.statNumberOfWins).to.be.above(0);
       });
   });
 
@@ -104,26 +95,26 @@ describe("CRUD", function () {
       });
   });
 
-  it("should have valid series stats", function () {
-    const seriesKey = series.key();
-    series = new Series();
-    return series.load(seriesKey)
-      .then(function () {
-        return series.populate();
-      })
-      .then(function () {
-        expect(series.players.length).to.equal(2);
-        const p = _.find(series.players, _.matchesProperty('username', 'foobar'));
-        expect(p.statWinPercentage).to.be.above(0);
-        expect(p.statNumberOfWins).to.be.above(0);
-      });
-  });
-
   it("should return latest games of series", function () {
     return series.getGames(5)
       .then(function (games) {
         expect(games.length).to.be.above(0).and.below(6);
         expect(games[0].range).to.equal(game.range);
+      });
+  });
+
+  it("should calculate correct stats for players", function () {
+    return series.getGames(5)
+      .then(function (games) {
+        series.calculatePlayerStats(games);
+        let p = _.find(series.players, _.matchesProperty('username', 'foobar'));
+        expect(p.stats.games).to.be.above(0);
+        expect(p.stats.wins).to.be.above(0);
+        expect(p.stats.streak).to.equal(games.length);
+        p = _.find(series.players, _.matchesProperty('username', 'ööliä'));
+        expect(p.stats.games).to.be.above(0);
+        expect(p.stats.wins).to.equal(0);
+        expect(p.stats.streak).to.equal(-games.length);
       });
   });
 

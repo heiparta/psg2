@@ -32,6 +32,10 @@ exports.get = function (event, context, callback) {
       return series.populate(); // Populate player data
     })
     .then(function () {
+      return series.getGames(30);
+    })
+    .then(function (games) {
+      series.calculatePlayerStats(games);
       return callback(null, addCORS(event, {
         statusCode: 200,
         body: JSON.stringify({

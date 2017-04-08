@@ -16,7 +16,7 @@ exports.create = function (event, context, callback) {
       return game.populate(); // Populate to verify all keys
     })
     .then(function () {
-      return Promise.all([game.save(), game.updatePlayerStats()]);
+      return game.save();
     })
     .then(function () {
       return callback(null, addCORS(event, {
