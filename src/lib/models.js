@@ -164,10 +164,9 @@ Player.prototype.addToSeries = function (series) {
 };
 
 Player.prototype.populate = function () {
-  // Customized populate to add stats to player rows that are missing them
   ModelBase.prototype.populate.bind(this)();
 
-  this.statWinPercentage = Math.floor(1000 * (this.statNumberOfWins / (this.statNumberOfGames || 1))) / 10;
+  this.statWinPercentage = Math.floor(1000 * ((this.statNumberOfWins || 0) / (this.statNumberOfGames || 1))) / 10;
 };
 
 const Series = function (name) {
