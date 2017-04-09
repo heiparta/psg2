@@ -195,11 +195,10 @@ Series.prototype.save = function () {
     });
 };
 
-Series.prototype.getGames = function (count) {
-  return db.queryModels(`game:${this.name}`, {
-    descending: true,
-    limit: count,
-  })
+Series.prototype.getGames = function (params) {
+  params = _.merge({descending: true}, params);
+
+  return db.queryModels(`game:${this.name}`, params)
   .then(function (games) {
     games = games.map(function (item) {
       return new Game(item);

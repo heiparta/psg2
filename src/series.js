@@ -32,7 +32,15 @@ exports.get = function (event, context, callback) {
       return series.populate(); // Populate player data
     })
     .then(function () {
-      return series.getGames(30);
+      const params = {};
+      if (event.queryStringParameters.stats_days) {
+        // Query games newer than X days
+        const queryDate = new Date();
+        queryDate.setHours(0, 0, 0, 0);
+        queryDate.setDate(queryDate.getDate() - (event.queryStringParameters.stats_days - 1));
+        params.moreThan = queryDate.getTime();
+      }
+      return series.getGames(params);
     })
     .then(function (games) {
       series.calculatePlayerStats(games);
@@ -54,7 +62,7 @@ exports.games = function (event, context, callback) {
   const series = new models.Series();
   return series.load(series.key(name))
     .then(function () {
-      return series.getGames(30);
+      return series.getGames({limit: 30});
     })
     .then(function (games) {
       return callback(null, addCORS(event, {

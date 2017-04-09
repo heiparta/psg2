@@ -96,7 +96,7 @@ describe("CRUD", function () {
   });
 
   it("should return latest games of series", function () {
-    return series.getGames(5)
+    return series.getGames({limit: 5})
       .then(function (games) {
         expect(games.length).to.be.above(0).and.below(6);
         expect(games[0].range).to.equal(game.range);
@@ -104,7 +104,7 @@ describe("CRUD", function () {
   });
 
   it("should calculate correct stats for players", function () {
-    return series.getGames(5)
+    return series.getGames({limit: 5})
       .then(function (games) {
         series.calculatePlayerStats(games);
         let p = _.find(series.players, _.matchesProperty('username', 'foobar'));
