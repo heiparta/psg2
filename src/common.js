@@ -6,7 +6,8 @@ const allowedOrigins = [
   "https://psg-app.picklane.com",
   "http://localhost:8099",
 ];
-module.exports.addCORS = function (event, response) {
+
+const addCORS = module.exports.addCORS = function (event, response) {
   const origin = event.headers.Origin || event.headers.origin;
   if (allowedOrigins.indexOf(origin) !== -1) {
     response.headers = _.merge({"Access-Control-Allow-Origin": origin}, response.headers);
@@ -30,4 +31,13 @@ module.exports.parseBody = function (raw) {
     .then(function () {
       return JSON.parse(raw);
     });
+};
+
+module.exports.createHandler = function (func) {
+  return function (event, context, callback) {
+    func(event, context, function (err, response) {
+      response = addCORS(event, response);
+      callback(err, response);
+    });
+  };
 };

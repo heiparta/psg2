@@ -47,6 +47,13 @@ provider:
 
 functions:
 
+  login:
+    handler: src/login.handler
+    events:
+      - http:
+          path: login
+          method: post
+          cors: true
   series-list:
     handler: src/series.list
     events:

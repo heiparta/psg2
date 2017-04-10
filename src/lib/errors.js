@@ -14,6 +14,13 @@ function InvalidParamError (message) {
 InvalidParamError.prototype = Object.create(Error.prototype);
 module.exports.InvalidParamError = InvalidParamError;
 
+function UnauthorizedError (message) {
+  this.message = message;
+  this.statusCode = 401;
+}
+UnauthorizedError.prototype = Object.create(Error.prototype);
+module.exports.UnauthorizedError = UnauthorizedError;
+
 function ForbiddenError (message) {
   this.message = message;
   this.statusCode = 403;
