@@ -6,7 +6,7 @@ var expect = require("chai").expect;
 var auth = require('../src/lib/auth');
 
 var password = "sentme";
-var user = "ken";
+var user = "foobar";
 var properties = {
   level: "user",
 };
