@@ -12,8 +12,8 @@ exports.handler = common.createHandler(function (event, context, callback) {
         return callback(null, common.getError(400, new Error("Required parameter(s) missing")));
       }
       return auth.validateUser(username, password)
-        .then(function () {
-          return auth.createToken(username, 10); // TODO perhaps bit more than 10 seconds?
+        .then(function (data) {
+          return auth.createToken(username, 10, data.properties); // TODO perhaps bit more than 10 seconds?
         });
     })
     .then(function (token) {

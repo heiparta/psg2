@@ -36,5 +36,16 @@ describe('Auth', function() {
         expect(err.statusCode).to.equal(403);
       });
   });
+
+  it('should create token', function() {
+    return auth.createToken(user, 1, properties)
+      .then(function (token) {
+        return auth.validateToken(token);
+      })
+      .then(function (data) {
+        expect(data.username).to.equal(user);
+        expect(data.properties.level).to.equal(properties.level);
+      });
+  });
 });
 

@@ -47,12 +47,13 @@ module.exports.validateUser = function (user, password) {
     });
 };
 
-module.exports.createToken = function (user, ttl) {
+module.exports.createToken = function (user, ttl, properties) {
   const token = crypto.randomBytes(32).toString('hex');
   return db.saveModel({
     id: `token:${token}`,
     username: user,
     ttl: Math.floor(Date.now() / 1000) + (ttl || 365 * 24 * 3600),
+    data: properties
   })
   .then(function (hash) {
     return token;
@@ -67,6 +68,7 @@ module.exports.validateToken = function (token) {
       }
       return {
         username: data.username,
+        properties: data.data,
       };
     });
 };
