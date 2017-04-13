@@ -1,6 +1,8 @@
 'use strict';
 
 const _ = require('lodash');
+const auth = require('./lib/auth');
+const errors = require('./lib/errors');
 
 const allowedOrigins = [
   "https://psg-app.picklane.com",
@@ -33,11 +35,45 @@ module.exports.parseBody = function (raw) {
     });
 };
 
+function sendResponse(event, response, callback) {
+    if (response instanceof Error) {
+      response = module.exports.getError(response.statusCode || 500, response);
+    }
+    response = addCORS(event, response);
+    callback(null, response);
+}
+
+module.exports.createAuthorizedHandler = function (func) {
+  return function (event, context, callback) {
+    const authorization = event.headers.Authorization || "";
+    const token = authorization.split(' ')[1];
+    if (!token) {
+      return sendResponse(event, new errors.UnauthorizedError("Missing authorization token"), callback);
+    }
+    auth.validateToken(token)
+      .then(function (data) {
+        context.username = data.username;
+        context.userProperties = data.properties;
+        func(event, context, function (err, response) {
+          sendResponse(event, err || response, callback);
+        });
+      })
+      .catch(function (err) {
+        sendResponse(event, err, callback);
+      });
+  };
+};
+
 module.exports.createHandler = function (func) {
   return function (event, context, callback) {
-    func(event, context, function (err, response) {
-      response = addCORS(event, response);
-      callback(err, response);
-    });
+    Promise.resolve()
+      .then(function () {
+        func(event, context, function (err, response) {
+          sendResponse(event, err || response, callback);
+        });
+      })
+      .catch(function (err) {
+        sendResponse(event, err, callback);
+      });
   };
 };

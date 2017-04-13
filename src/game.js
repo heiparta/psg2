@@ -5,7 +5,7 @@ const errors = require('./lib/errors');
 const models = require('./lib/models');
 const addCORS = common.addCORS;
 
-exports.create = function (event, context, callback) {
+exports.create = common.createAuthorizedHandler(function (event, context, callback) {
   let game;
   return common.parseBody(event.body)
     .then(function (params) {
@@ -29,7 +29,7 @@ exports.create = function (event, context, callback) {
       return callback(null, common.getError(err.statusCode, err));
     });
 
-};
+});
 
 exports.get = function (event, context, callback) {
   const id = decodeURI(event.pathParameters.id);

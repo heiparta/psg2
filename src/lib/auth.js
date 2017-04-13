@@ -63,8 +63,8 @@ module.exports.createToken = function (user, ttl, properties) {
 module.exports.validateToken = function (token) {
   return db.getModel(`token:${token}`)
     .then(function (data) {
-      if (!data.username) {
-        throw new errors.ForbiddenError('Invalid token');
+      if (!data || !data.username) {
+        throw new errors.ForbiddenError('Invalid authorization token');
       }
       return {
         username: data.username,
